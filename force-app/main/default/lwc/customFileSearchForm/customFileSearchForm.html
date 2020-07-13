@@ -1,0 +1,21 @@
+<template>
+    <lightning-card >
+        <div class="slds-m-around_medium">
+            <h1 class="slds-text-heading_small">ファイル内検索</h1>
+            <p class="slds-text-body_regular">キーワードを入力して検索ボタンをクリックしてください</p>
+        </div>
+        <!--<template if:true={error}>
+            {error}
+        </template> -->
+        <div class="c-container">
+            <lightning-layout>
+                <lightning-layout-item padding="around-small">
+                    <lightning-input label="Text" name="accountName" variant="label-hidden" onchange={handleSearchTextChange} value={searchText}></lightning-input>
+                </lightning-layout-item>
+                <lightning-layout-item padding="around-small">
+                    <lightning-button variant="search" label="検索" title="検索" onclick={handleSearch} class="slds-m-left_x-small"></lightning-button>
+                </lightning-layout-item>
+            </lightning-layout>
+        </div>
+    </lightning-card>
+</template>

@@ -1,0 +1,14 @@
+<template>
+    <template if:true={tableDisp}>
+        <div>
+            <lightning-datatable
+                key-field="id"
+                data={data}
+                show-row-number-column
+                hide-checkbox-column
+                columns={columns}
+                is-loading={tableLoadingState}>
+            </lightning-datatable>
+        </div>
+    </template>
+</template>
