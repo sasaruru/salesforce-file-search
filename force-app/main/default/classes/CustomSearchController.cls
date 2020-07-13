@@ -27,6 +27,7 @@ public class CustomSearchController {
         }
         System.Debug(linkedEntityIds);
 
+        // TODO Use SOSL
         List<Contact> objList = [SELECT Id, Name FROM Contact WHERE Id in :linkedEntityIds];
         List<Result> results = new List<Result>();
         for (Contact c : objList){
