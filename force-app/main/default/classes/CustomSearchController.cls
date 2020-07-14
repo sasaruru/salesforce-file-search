@@ -8,13 +8,14 @@ public class CustomSearchController {
            return new List<Result>(); 
         }
         // コンテンツID取得
-        String query = 'find \'' + searchText + '*\' in all fields returning ContentVersion(Id,Title,ContentDocumentId)';
+        String query = 'find \'' + searchText + '\' in all fields returning ContentVersion(Id,Title,ContentDocumentId,ContentUrl)';
         System.Debug(query);
         List<List <sObject>> sobList =  search.query(query);
         // ドキュメントID取得
         List<ContentVersion> cList = (List<ContentVersion>)sobList[0];
         Set<String> contentVersionIds = new Set<String>();
         for (ContentVersion cv : cList){
+            System.Debug(cv);
             contentVersionIds.add(cv.ContentDocumentId);
         }
         System.Debug(contentVersionIds);
@@ -27,11 +28,15 @@ public class CustomSearchController {
         }
         System.Debug(linkedEntityIds);
 
-        // TODO Use SOSL
-        List<Contact> objList = [SELECT Id, Name FROM Contact WHERE Id in :linkedEntityIds];
+        // デモ版は取引先責任者固定.
+        // phase1で画面から対象オブジェクトの取得
+        // phase2で取得項目の選択?
+        String tbl = 'Contact';
+        String q = 'SELECT Id, Name FROM ' + tbl + ' WHERE Id in :linkedEntityIds';
+        List<SObject> objList = Database.query(q);
         List<Result> results = new List<Result>();
-        for (Contact c : objList){
-            results.add(new Result(c.Id, c.Name, contentDocumentLinks, cList));
+        for (SObject obj : objList){
+            results.add(new Result((String)obj.get('Id'), (String)obj.get('Name'), contentDocumentLinks, cList));
         }
         return results;
 
@@ -45,21 +50,27 @@ public class CustomSearchController {
         public String link;
         @AuraEnabled
         public String title;
+        @AuraEnabled
+        public String contentLink;
+        @AuraEnabled
+        public String documentId;
         
         public Result(String objId, String objName,List<ContentDocumentLink> contentDocumentLinks,List<ContentVersion> contentVersions) {
             id = objId;
             name = objName;
             link = '/'+objId;
-            String documentId = '';
+            documentId='';
             for (ContentDocumentLink contentDocumentLink : contentDocumentLinks){
                 if(id.equals(contentDocumentLink.LinkedEntityId)){
                     documentId = contentDocumentLink.ContentDocumentId;
+                    contentLink = '/' + documentId;
                     break;
                 }
             }
             for (ContentVersion contentVersion :contentVersions){
                 if(documentId.equals(contentVersion.ContentDocumentId)){
                     title = contentVersion.Title;
+                   // contentLink = contentVersion.ContentUrl;
                 }
             }
         }
