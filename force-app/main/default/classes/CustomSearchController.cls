@@ -1,18 +1,26 @@
 public class CustomSearchController {
    
     @AuraEnabled
-    public static List<Result> searchRecords(String searchText) {
-
+    public static List<Result> searchRecords(String searchText, String targetObject) {
+        List<Result> results = new List<Result>();
         Integer counter= 0;
         if(searchText.length() < 2){
-           return new List<Result>(); 
+           return results; 
         }
-        // コンテンツID取得
-        String query = 'find \'' + searchText + '*\' in all fields returning ContentVersion(Id,Title,ContentDocumentId)';
+        // ------------------------------
+        //  SQSLによるコンテンツID取得
+        // ------------------------------
+        String query = 'find \'' + searchText + '\' in all fields returning ContentVersion(Id,Title,ContentDocumentId,ContentUrl,SystemModstamp)';
         System.Debug(query);
         List<List <sObject>> sobList =  search.query(query);
         // ドキュメントID取得
         List<ContentVersion> cList = (List<ContentVersion>)sobList[0];
+        if(cList.size() == 0){
+            return results;
+        }
+        // ----------------------------------------------------------
+        //  contentVersionIdからcontentDocumentLinksのentityId取得
+        // ----------------------------------------------------------    
         Set<String> contentVersionIds = new Set<String>();
         for (ContentVersion cv : cList){
             contentVersionIds.add(cv.ContentDocumentId);
@@ -25,13 +33,13 @@ public class CustomSearchController {
         for (ContentDocumentLink cdLink : contentDocumentLinks){
             linkedEntityIds.add(cdLink.LinkedEntityId);
         }
-        System.Debug(linkedEntityIds);
-
-        // TODO Use SOSL
-        List<Contact> objList = [SELECT Id, Name FROM Contact WHERE Id in :linkedEntityIds];
-        List<Result> results = new List<Result>();
-        for (Contact c : objList){
-            results.add(new Result(c.Id, c.Name, contentDocumentLinks, cList));
+        // ----------------------------------------------------------
+        //  LinkedEntityIdから対象オブジェクトレコード取得
+        // ----------------------------------------------------------    
+        String q = 'SELECT Id, Name FROM ' + targetObject + ' WHERE Id in :linkedEntityIds';
+        List<SObject> objList = Database.query(q);
+        for (SObject obj : objList){
+            results.add(new Result((String)obj.get('Id'), (String)obj.get('Name'), contentDocumentLinks, cList));
         }
         return results;
 
@@ -42,24 +50,32 @@ public class CustomSearchController {
         @AuraEnabled
         public String name;
         @AuraEnabled
-        public String link;
+        public String objectLink;
         @AuraEnabled
         public String title;
+        @AuraEnabled
+        public String documentLink;
+        @AuraEnabled
+        public String documentId;
+        @AuraEnabled
+        public String lastUpdate;
         
         public Result(String objId, String objName,List<ContentDocumentLink> contentDocumentLinks,List<ContentVersion> contentVersions) {
             id = objId;
             name = objName;
-            link = '/'+objId;
-            String documentId = '';
+            objectLink = '/'+objId;
+            documentId='';
             for (ContentDocumentLink contentDocumentLink : contentDocumentLinks){
                 if(id.equals(contentDocumentLink.LinkedEntityId)){
                     documentId = contentDocumentLink.ContentDocumentId;
+                    documentLink = '/' + documentId;
                     break;
                 }
             }
             for (ContentVersion contentVersion :contentVersions){
                 if(documentId.equals(contentVersion.ContentDocumentId)){
                     title = contentVersion.Title;
+                    lastUpdate = contentVersion.SystemModstamp.format('yyyy/MM/dd HH:mm','Asia/Tokyo');
                 }
             }
         }
