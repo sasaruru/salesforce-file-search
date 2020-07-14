@@ -10,7 +10,7 @@ public class CustomSearchController {
         // ------------------------------
         //  SQSLによるコンテンツID取得
         // ------------------------------
-        String query = 'find \'' + searchText + '\' in all fields returning ContentVersion(Id,Title,ContentDocumentId,ContentUrl,SystemModstamp)';
+        String query = 'find \'' + searchText + '\' in all fields returning ContentVersion(Id,Title,ContentDocumentId,FileExtension,SystemModstamp)';
         System.Debug(query);
         List<List <sObject>> sobList =  search.query(query);
         // ドキュメントID取得
@@ -38,46 +38,62 @@ public class CustomSearchController {
         // ----------------------------------------------------------    
         String q = 'SELECT Id, Name FROM ' + targetObject + ' WHERE Id in :linkedEntityIds';
         List<SObject> objList = Database.query(q);
-        for (SObject obj : objList){
-            results.add(new Result((String)obj.get('Id'), (String)obj.get('Name'), contentDocumentLinks, cList));
+        // 画面表示は検索されたファイル分のため取得したContentVersion事にオブジェクト作成
+        for (ContentVersion contentVersion : cList){
+            Result result = createResult(contentVersion, contentDocumentLinks, objList);
+            if(result != null){
+                results.add(result);
+            }
         }
         return results;
+    }
 
+    private static Result createResult(ContentVersion contentVersion,List<ContentDocumentLink> contentDocumentLinks,List<SObject> objLists){
+        String targetRecordId = '';
+        String documentId = contentVersion.ContentDocumentId;
+        // breakするとloop全体が止まってしまう仕様らしく、
+        // 仕方がないがネスト対応
+        for (ContentDocumentLink contentDocumentLink : contentDocumentLinks){
+            if(documentId.equals(contentDocumentLink.ContentDocumentId)){
+                targetRecordId = contentDocumentLink.LinkedEntityId;
+                for (SObject obj :objLists){
+                    if(targetRecordId.equals((string)obj.get('Id'))){
+                        System.debug('create result');
+                        return new Result(obj, contentVersion);
+                    }
+                }               
+            }
+        }        
+        return null;
     }
     public class Result {
         @AuraEnabled
-        public String id;
+        public String targetId;
         @AuraEnabled
-        public String name;
+        public String targetName;
         @AuraEnabled
-        public String objectLink;
+        public String targetLink;
         @AuraEnabled
-        public String title;
+        public String documentTitle;
         @AuraEnabled
         public String documentLink;
         @AuraEnabled
         public String documentId;
         @AuraEnabled
+        public String documentExtension;
+        @AuraEnabled
         public String lastUpdate;
         
-        public Result(String objId, String objName,List<ContentDocumentLink> contentDocumentLinks,List<ContentVersion> contentVersions) {
-            id = objId;
-            name = objName;
-            objectLink = '/'+objId;
-            documentId='';
-            for (ContentDocumentLink contentDocumentLink : contentDocumentLinks){
-                if(id.equals(contentDocumentLink.LinkedEntityId)){
-                    documentId = contentDocumentLink.ContentDocumentId;
-                    documentLink = '/' + documentId;
-                    break;
-                }
-            }
-            for (ContentVersion contentVersion :contentVersions){
-                if(documentId.equals(contentVersion.ContentDocumentId)){
-                    title = contentVersion.Title;
-                    lastUpdate = contentVersion.SystemModstamp.format('yyyy/MM/dd HH:mm','Asia/Tokyo');
-                }
-            }
+        public Result(SObject obj, ContentVersion contentVersion) {
+            targetId = (string)obj.get('Id');
+            targetLink = '/' + (string)obj.get('Id');
+            targetName = (string)obj.get('Name');
+
+            documentId = contentVersion.ContentDocumentId;
+            documentLink = '/' + contentVersion.ContentDocumentId;
+            documentTitle = contentVersion.Title;
+            documentExtension = contentVersion.FileExtension;
+            lastUpdate = contentVersion.SystemModstamp.format('yyyy/MM/dd HH:mm','Asia/Tokyo');
         }
     }
 }
