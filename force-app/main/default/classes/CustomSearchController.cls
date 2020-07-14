@@ -1,21 +1,28 @@
 public class CustomSearchController {
    
     @AuraEnabled
-    public static List<Result> searchRecords(String searchText) {
-
+    public static List<Result> searchRecords(String searchText, String targetObject) {
+        List<Result> results = new List<Result>();
         Integer counter= 0;
         if(searchText.length() < 2){
-           return new List<Result>(); 
+           return results; 
         }
-        // コンテンツID取得
-        String query = 'find \'' + searchText + '\' in all fields returning ContentVersion(Id,Title,ContentDocumentId,ContentUrl)';
+        // ------------------------------
+        //  SQSLによるコンテンツID取得
+        // ------------------------------
+        String query = 'find \'' + searchText + '\' in all fields returning ContentVersion(Id,Title,ContentDocumentId,ContentUrl,SystemModstamp)';
         System.Debug(query);
         List<List <sObject>> sobList =  search.query(query);
         // ドキュメントID取得
         List<ContentVersion> cList = (List<ContentVersion>)sobList[0];
+        if(cList.size() == 0){
+            return results;
+        }
+        // ----------------------------------------------------------
+        //  contentVersionIdからcontentDocumentLinksのentityId取得
+        // ----------------------------------------------------------    
         Set<String> contentVersionIds = new Set<String>();
         for (ContentVersion cv : cList){
-            System.Debug(cv);
             contentVersionIds.add(cv.ContentDocumentId);
         }
         System.Debug(contentVersionIds);
@@ -26,15 +33,11 @@ public class CustomSearchController {
         for (ContentDocumentLink cdLink : contentDocumentLinks){
             linkedEntityIds.add(cdLink.LinkedEntityId);
         }
-        System.Debug(linkedEntityIds);
-
-        // デモ版は取引先責任者固定.
-        // phase1で画面から対象オブジェクトの取得
-        // phase2で取得項目の選択?
-        String tbl = 'Contact';
-        String q = 'SELECT Id, Name FROM ' + tbl + ' WHERE Id in :linkedEntityIds';
+        // ----------------------------------------------------------
+        //  LinkedEntityIdから対象オブジェクトレコード取得
+        // ----------------------------------------------------------    
+        String q = 'SELECT Id, Name FROM ' + targetObject + ' WHERE Id in :linkedEntityIds';
         List<SObject> objList = Database.query(q);
-        List<Result> results = new List<Result>();
         for (SObject obj : objList){
             results.add(new Result((String)obj.get('Id'), (String)obj.get('Name'), contentDocumentLinks, cList));
         }
@@ -47,30 +50,32 @@ public class CustomSearchController {
         @AuraEnabled
         public String name;
         @AuraEnabled
-        public String link;
+        public String objectLink;
         @AuraEnabled
         public String title;
         @AuraEnabled
-        public String contentLink;
+        public String documentLink;
         @AuraEnabled
         public String documentId;
+        @AuraEnabled
+        public String lastUpdate;
         
         public Result(String objId, String objName,List<ContentDocumentLink> contentDocumentLinks,List<ContentVersion> contentVersions) {
             id = objId;
             name = objName;
-            link = '/'+objId;
+            objectLink = '/'+objId;
             documentId='';
             for (ContentDocumentLink contentDocumentLink : contentDocumentLinks){
                 if(id.equals(contentDocumentLink.LinkedEntityId)){
                     documentId = contentDocumentLink.ContentDocumentId;
-                    contentLink = '/' + documentId;
+                    documentLink = '/' + documentId;
                     break;
                 }
             }
             for (ContentVersion contentVersion :contentVersions){
                 if(documentId.equals(contentVersion.ContentDocumentId)){
                     title = contentVersion.Title;
-                   // contentLink = contentVersion.ContentUrl;
+                    lastUpdate = contentVersion.SystemModstamp.format('yyyy/MM/dd HH:mm','Asia/Tokyo');
                 }
             }
         }

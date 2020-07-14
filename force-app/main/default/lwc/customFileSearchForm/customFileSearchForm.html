@@ -1,21 +1,24 @@
 <template>
     <lightning-card >
-        <div class="slds-m-around_medium">
+        <div class="slds-container--center slds-size--9-of-12 slds-m-bottom_medium">
             <h1 class="slds-text-heading_small">ファイル内検索</h1>
             <p class="slds-text-body_regular">キーワードを入力して検索ボタンをクリックしてください</p>
         </div>
         <!--<template if:true={error}>
             {error}
         </template> -->
-        <div class="c-container">
-            <lightning-layout>
-                <lightning-layout-item padding="around-small">
-                    <lightning-input label="Text" name="accountName" variant="label-hidden" onchange={handleSearchTextChange} value={searchText}></lightning-input>
-                </lightning-layout-item>
-                <lightning-layout-item padding="around-small">
+        <div class="slds-container--center slds-size--9-of-12">
+            <div class="slds-grid">
+                <div class="slds-col slds-size_1-of-4">
+                    <lightning-combobox variant="label-hidden" name="progress" value={targetObject} placeholder="Select Progress" options={options} onchange={handleChangeSelect}></lightning-combobox>
+                </div>
+                <div class="slds-col slds-size_2-of-4">
+                    <lightning-input label="Text" name="accountName" placeholder="オブジェクトを検索" variant="label-hidden" onchange={handleSearchTextChange} value={searchText}></lightning-input>                  
+                </div>
+                <div class="slds-col slds-size_1-of-4">
                     <lightning-button variant="search" label="検索" title="検索" onclick={handleSearch} class="slds-m-left_x-small"></lightning-button>
-                </lightning-layout-item>
-            </lightning-layout>
+                </div>
+            </div>
         </div>
     </lightning-card>
 </template>
