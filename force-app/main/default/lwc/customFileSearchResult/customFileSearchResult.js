@@ -5,8 +5,9 @@ import { NavigationMixin } from 'lightning/navigation';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 const columns = [
-    { label: 'Name', fieldName: 'objectLink', type: 'url', typeAttributes:{label: { fieldName:'name'},  target: '_blank'}},
-    { label: 'ファイル名', fieldName: 'documentLink', type: 'url', typeAttributes:{label: { fieldName:'title'}}},
+    { label: 'Name', fieldName: 'targetLink', type: 'url', typeAttributes:{label: { fieldName:'targetName'},  target: '_blank'}},
+    { label: 'ファイル名', fieldName: 'documentLink', type: 'url', typeAttributes:{label: { fieldName:'documentTitle'}}},
+    { label: '拡張子', fieldName: 'documentExtension', type: 'text'},
     { label: '最終更新日', fieldName: 'lastUpdate', type: 'text'},
     { label: 'Preview', type: 'button', initialWidth: 135, typeAttributes: { label: 'Preview', name: 'preview', title: 'Click to View Details'}},
 ];
@@ -31,6 +32,7 @@ export default class CustomFileSearchResult extends NavigationMixin(LightningEle
     handleResult(fileList) {
         // 0件の場合メッセージを表示し終了
         if (fileList.length === 0){
+            this.data = [];
             const evt = new ShowToastEvent({
                 title: '検索結果',
                 message: '検索結果が0件です。再度検索してください。',
@@ -41,6 +43,7 @@ export default class CustomFileSearchResult extends NavigationMixin(LightningEle
         }
         
         const data = fileList;
+        console.log(data);
         this.data = data;
         this.tableLoadingState = false;
         this.tableDisp = true;
