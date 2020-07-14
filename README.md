@@ -15,12 +15,12 @@
 JOIできない関係上、データを取得してから改めて画面表示用のデータを作成している.
 
 ## インストール方法（多分)
-1. クローンする
+1. クローンする  
  `git clone git@github.com:sasaruru/salesforce-file-search.git`
-2. salesforce 組織に接続
- develop
- `sfdx force:auth:web:login --setalias {UserName} --instanceurl https://login.salesforce.com` 
- sandbox
- `sfdx force:auth:web:login --setalias {UserName} --instanceurl https://test.salesforce.com` 
-3. 各組織にpush
+2. salesforce 組織に接続  
+ develop  
+ `sfdx force:auth:web:login --setalias {UserName} --instanceurl https://login.salesforce.com`  
+ sandbox  
+ `sfdx force:auth:web:login --setalias {UserName} --instanceurl https://test.salesforce.com`  
+3. 各組織にpush  
  `sfdx force:source:push -u {UserName}`
