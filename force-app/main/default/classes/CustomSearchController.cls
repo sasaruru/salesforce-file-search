@@ -66,7 +66,7 @@ public class CustomSearchController {
         }        
         return null;
     }
-    public class Result {
+    @TestVisible public class Result {
         @AuraEnabled
         public String targetId;
         @AuraEnabled
