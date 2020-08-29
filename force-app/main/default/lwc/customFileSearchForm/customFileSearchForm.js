@@ -1,23 +1,31 @@
-import { LightningElement, track, wire } from 'lwc';
+import { LightningElement, track, wire, api } from 'lwc';
 import searchRecords from '@salesforce/apex/CustomSearchController.searchRecords';
+import getObjSelectOptions from '@salesforce/apex/CustomSearchController.getObjSelectOptions';
 import { CurrentPageReference } from 'lightning/navigation';
 import { fireEvent } from 'c/pubsub';
 
 export default class CustomFileSearchForm extends LightningElement {
+    @api targetObjects;
+    
     @wire(CurrentPageReference) pageRef;
     @track searchText;
     // 初期値は取引先
-    @track targetObject = 'Account';
+    @track targetObject;
+    @track options;
 
+    connectedCallback(){
+        this.getOptions();
+    }
     handleSearchTextChange(event){
-        this.searchText = event.detail.value;
+        this.searchText = event.detail.value;       
     }
 
     handleSearch() {
         let pageRef = this.pageRef;
         searchRecords({searchText : this.searchText, targetObject: this.targetObject})
             .then(result=>{
-                fireEvent(pageRef, 'searchResult', result);
+                const params = {targetObject: this.targetObject, result: result};
+                fireEvent(pageRef, 'searchResult', params);
                 this.error = undefined;
             })
             .catch(error =>{
@@ -29,13 +37,21 @@ export default class CustomFileSearchForm extends LightningElement {
         this.targetObject = event.detail.value;
     }
 
-    get options(){
-        // 対象オブジェクトを追加する場合はここに直接記載
-        // TODO soqlで対象オブジェクト取得
-        return [
-            {'label': '取引先', 'value': 'Account'},
-            {'label': 'リード', 'value': 'Lead'},
-            {'label': '取引先責任者', 'value': 'Contact'},
-        ];
+    getOptions(){
+        // undifinedも含む
+        if(this.targetObjects == null){
+            return [];
+        }
+        const objList = this.targetObjects.split(',');
+        getObjSelectOptions({objs: objList})
+            .then(result=>{
+                console.log(result);
+                this.targetObject = result[0].value;
+                this.options = result;
+            })
+            .catch(error =>{
+                console.log(error);
+                this.error = error;
+            });
     }
 }

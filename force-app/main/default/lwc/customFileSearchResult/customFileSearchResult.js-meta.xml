@@ -5,4 +5,10 @@
     <targets>
         <target>lightning__AppPage</target>
     </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__AppPage">
+            <property name="targetColumns" type="String" />
+            <property name="labels" type="String" />
+        </targetConfig>
+    </targetConfigs>
 </LightningComponentBundle>

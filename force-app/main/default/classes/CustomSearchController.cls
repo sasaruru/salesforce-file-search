@@ -1,4 +1,35 @@
 public class CustomSearchController {
+
+
+    @AuraEnabled
+    public static Map<ID, SObject> getObjectInfo(String targetObject ,String targetColumns, List<String> ids ){
+        // クエリ生成
+        String q = 'SELECT Id, Name,' + targetColumns + ' FROM ' + targetObject + ' WHERE Id in :ids';
+        List<SObject> sList = Database.query(q);
+        Map<Id, SObject> result = new Map<Id, SObject>(Database.query(q));
+        System.debug(result);
+        return result;
+    }
+
+    @AuraEnabled
+    public static List<Map<String, String>> getObjSelectOptions(List<String> objs){
+        // mapの中身は
+        // key : label, value
+        // value: オブジェクトのAPI, ラベル名
+        List<Map<String, String>> result = new List<Map<String, String>>();
+
+        for(String obj : objs){
+            Map<String, String> option = new Map<String, String>();
+            option.put('value', obj);
+
+            Map<String, sObjectType> sObjTypeMap = Schema.getGlobalDescribe();
+            sObjectType sObjType = sObjTypeMap.get(obj);
+            option.put('label', sObjType.getDescribe().getLabel());
+
+            result.add(option);
+        }
+        return result;
+    }
    
     @AuraEnabled
     public static List<Result> searchRecords(String searchText, String targetObject) {
@@ -58,7 +89,6 @@ public class CustomSearchController {
                 targetRecordId = contentDocumentLink.LinkedEntityId;
                 for (SObject obj :objLists){
                     if(targetRecordId.equals((string)obj.get('Id'))){
-                        System.debug('create result');
                         return new Result(obj, contentVersion);
                     }
                 }               
