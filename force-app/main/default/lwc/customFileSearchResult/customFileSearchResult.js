@@ -7,9 +7,9 @@ import getObjectInfo from '@salesforce/apex/CustomSearchController.getObjectInfo
 
 var columns = [
     { label: 'Preview', type: 'button', initialWidth: 135, typeAttributes: { label: 'Preview', name: 'preview', title: 'Click to View Details'}},
-    { label: 'Name', fieldName: 'targetLink', type: 'url', typeAttributes:{label: { fieldName:'targetName'},  target: '_blank'}},
-    { label: 'ファイル名', fieldName: 'documentLink', type: 'url', typeAttributes:{label: { fieldName:'documentTitle'}}},
-    { label: '拡張子', fieldName: 'documentExtension', type: 'text'},
+    { label: 'Name', fieldName: 'targetLink', type: 'url', sortable: true, typeAttributes:{label: { fieldName:'targetName'},  target: '_blank'}},
+    { label: 'ファイル名', fieldName: 'documentLink', type: 'url', sortable: true, typeAttributes:{label: { fieldName:'documentTitle'}}},
+    { label: '拡張子', fieldName: 'documentExtension', type: 'text' },
     { label: 'アップロード日', fieldName: 'lastUpdate', type: 'text'},
     // ここから任意項目
     
@@ -21,6 +21,8 @@ export default class CustomFileSearchResult extends NavigationMixin(LightningEle
     @track tableColumns = columns;
     @track tableLoadingState = true;
     @track tableDisp = false;
+    @track sorted_by;
+    @track sorted_direction;
     @api targetColumns;
     @api labels;
 
@@ -34,9 +36,7 @@ export default class CustomFileSearchResult extends NavigationMixin(LightningEle
         unregisterAllListeners(this);
     }
 
-    handleResult(params) {
-
-        
+    handleResult(params) {        
         // 0件の場合メッセージを表示し終了
         var fileList = params.result;
         if (fileList.length === 0){
@@ -81,19 +81,17 @@ export default class CustomFileSearchResult extends NavigationMixin(LightningEle
                 const tblColms = this.targetColumns.split(',');
                 const tblLabels = this.labels.split(',');
                 for (var i=0; i < tblColms.length; i++){
-                    // { label: 'アップロード日', fieldName: 'lastUpdate', type: 'text'},
+                    // { label: 'アップロード日', fieldName: 'lastUpdate', type: 'text', sortable: true,},
                     var c = {};
                     c.label = tblLabels[i];
                     c.fieldName = tblColms[i];
                     c.type = 'text';
+                    c.sortable = true;
                     this.tableColumns.push(c);
-                    console.log(JSON.stringify('ここ'));
                 }
                 this.tableLoadingState = false;
                 this.data = resultList;
                 this.tableDisp = true;
-                console.log(JSON.stringify(this.tableColumns));
-                console.log(JSON.stringify(this.data));
             })
             .catch(error =>{
                 console.log(error);
@@ -111,5 +109,24 @@ export default class CustomFileSearchResult extends NavigationMixin(LightningEle
                 selectedRecordId:row.documentId
             }
         });
-    }  
+    }
+    handle_sort_data(event) {
+        this.sorted_by = event.detail.fieldName;
+        this.sorted_direction = event.detail.sortDirection;
+        this.sort_data(event.detail.fieldName, event.detail.sortDirection);
+    }
+    sort_data(fieldname, direction) {
+        let sorting_data = JSON.parse(JSON.stringify(this.data));
+        // ソートするカラムの値を参照
+        let keyValue = (a) => {
+            return a[fieldname];
+        };
+        let isReverse = direction === 'asc' ? 1 : -1;
+        sorting_data.sort((x, y) => {
+            x = keyValue(x) ? keyValue(x) : '';
+            y = keyValue(y) ? keyValue(y) : '';
+            return isReverse * ((x > y) - (y > x));
+        });
+        this.data = sorting_data;
+    }
 }

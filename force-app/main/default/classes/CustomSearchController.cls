@@ -32,7 +32,7 @@ public class CustomSearchController {
     }
    
     @AuraEnabled
-    public static List<Result> searchRecords(String searchText, String targetObject) {
+    public static List<Result> searchRecords(String searchText, String targetObject, String sortValue) {
         List<Result> results = new List<Result>();
         Integer counter= 0;
         if(searchText.length() < 2){
@@ -41,7 +41,7 @@ public class CustomSearchController {
         // ------------------------------
         //  SQSLによるコンテンツID取得
         // ------------------------------
-        String query = 'find \'' + searchText + '\' in all fields returning ContentVersion(Id,Title,ContentDocumentId,FileExtension,SystemModstamp)';
+        String query = 'find \'' + searchText + '\' in all fields returning ContentVersion(Id,Title,ContentDocumentId,FileExtension,SystemModstamp ORDER BY SystemModstamp ' + sortValue + ')';
         System.Debug(query);
         List<List <sObject>> sobList =  search.query(query);
         // ドキュメントID取得

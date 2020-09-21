@@ -12,9 +12,12 @@ export default class CustomFileSearchForm extends LightningElement {
     // 初期値は取引先
     @track targetObject;
     @track options;
+    @track sortOptions;
+    @track sortOptionValue = 'DESC';
 
     connectedCallback(){
         this.getOptions();
+        this.getSortOptions();
     }
     handleSearchTextChange(event){
         this.searchText = event.detail.value;       
@@ -22,7 +25,7 @@ export default class CustomFileSearchForm extends LightningElement {
 
     handleSearch() {
         let pageRef = this.pageRef;
-        searchRecords({searchText : this.searchText, targetObject: this.targetObject})
+        searchRecords({searchText : this.searchText, targetObject: this.targetObject, sortValue: this.sortOptionValue})
             .then(result=>{
                 const params = {targetObject: this.targetObject, result: result};
                 fireEvent(pageRef, 'searchResult', params);
@@ -53,5 +56,11 @@ export default class CustomFileSearchForm extends LightningElement {
                 console.log(error);
                 this.error = error;
             });
+    }
+    getSortOptions() {
+        this.sortOptions =  [
+            { label: '降順', value: 'DESC' },
+            { label: '昇順', value: 'ASC' },
+        ];
     }
 }

@@ -8,7 +8,10 @@
                 hide-checkbox-column
                 columns={tableColumns}
                 is-loading={tableLoadingState}
-                onrowaction={handleRowAction} >
+                onrowaction={handleRowAction} 
+                sorted-by={sorted_by}
+                onsort={handle_sort_data} 
+                sorted-direction={sorted_direction}>
             </lightning-datatable>
         </div>
     </template>

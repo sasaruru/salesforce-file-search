@@ -19,6 +19,15 @@
                     <lightning-button variant="search" label="検索" title="検索" onclick={handleSearch} class="slds-m-left_x-small"></lightning-button>
                 </div>
             </div>
+            <div class="sld-grid">
+                <div class="slds-col slds-size_4-of-4">
+                    <lightning-radio-group name="radioGroup"
+                          label="アップロード日の並び順"
+                          options={sortOptions}
+                          value={sortOptionValue}
+                          type="radio"></lightning-radio-group>
+                </div>
+            </div>
         </div>
     </lightning-card>
 </template>
