@@ -16,16 +16,27 @@ var columns = [
 ];
 
 export default class CustomFileSearchResult extends NavigationMixin(LightningElement) {
+    // targetConfig
+    @api targetColumns;
+    @api labels;
+    @api displayRows;
+
     @wire(CurrentPageReference) pageRef;
     @track data = [];
+    @track displayResult;
     @track tableColumns = columns;
     @track tableLoadingState = true;
     @track tableDisp = false;
+    // datatable ソート
     @track sorted_by;
     @track sorted_direction;
-    @api targetColumns;
-    @api labels;
-
+    // データ件数表示
+    @track left = 0;
+    @track right = this.displayRows;
+    @track dataSize = 0;
+    @track displayLeftCount = 1;
+    @track displayRightCount = this.displayRows;
+    
     connectedCallback() {
         // subscribe to searchKeyChange event
         registerListener('searchResult', this.handleResult, this);
@@ -90,8 +101,22 @@ export default class CustomFileSearchResult extends NavigationMixin(LightningEle
                     this.tableColumns.push(c);
                 }
                 this.tableLoadingState = false;
+
                 this.data = resultList;
                 this.tableDisp = true;
+                // ページング設定
+                this.displayResult = resultList.slice(0,this.displayRows);
+                // データサイズ設定
+                this.left = 0;
+                this.right = this.displayRows;
+                this.dataSize = resultList.length
+                this.displayLeftCount = 1;
+                // 取得件数がdisplayRows件以下だった場合のページング設定
+                if(this.right > this.dataSize){
+                    this.displayRightCount = this.dataSize;
+                }else{
+                    this.displayRightCount = this.right;
+                }
             })
             .catch(error =>{
                 console.log(error);
@@ -128,5 +153,44 @@ export default class CustomFileSearchResult extends NavigationMixin(LightningEle
             return isReverse * ((x > y) - (y > x));
         });
         this.data = sorting_data;
+    }
+
+    /**
+     * 次ページへ改ページを行い、
+     * 次ページに表示するリストを取得する
+     */
+    pressRight() {
+        if(this.right > this.dataSize){
+            return false;
+        }
+        this.left = this.right;
+        this.right =  this.right + this.displayRows;
+        this.displayResult = this.data.slice(this.left, this.right);
+        this.displayLeftCount = this.left;
+        if(this.right > this.dataSize){ // 次ページの上限が取得件数を超える場合のページング
+            this.displayRightCount = this.dataSize;
+        }else{
+            this.displayRightCount = this.right;
+        }
+    }
+
+    /**
+     * 前ページへ改ページを行い、
+     * 前ページに表示するリストを取得する
+     */
+    pressLeft() {
+        if(this.left == 0){
+            return false;
+        }
+        this.right = this.left;
+        this.left =  this.left - this.displayRows;
+        if(this.left < 1){
+            this.displayResult = this.data.slice(0, this.right);
+            this.displayLeftCount = 1;
+        }else{
+            this.displayResult = this.data.slice(this.left, this.right);
+            this.displayLeftCount = this.left
+        }
+        this.displayRightCount = this.right;
     }
 }

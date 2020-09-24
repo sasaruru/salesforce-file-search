@@ -25,6 +25,7 @@ export default class CustomFileSearchForm extends LightningElement {
 
     handleSearch() {
         let pageRef = this.pageRef;
+        console.log(this.sortOptionValue);
         searchRecords({searchText : this.searchText, targetObject: this.targetObject, sortValue: this.sortOptionValue})
             .then(result=>{
                 const params = {targetObject: this.targetObject, result: result};
@@ -38,6 +39,9 @@ export default class CustomFileSearchForm extends LightningElement {
 
     handleChangeSelect(event){
         this.targetObject = event.detail.value;
+    }
+    handleChangeSort(event){
+        this.sortOptionValue = event.detail.value;
     }
 
     getOptions(){

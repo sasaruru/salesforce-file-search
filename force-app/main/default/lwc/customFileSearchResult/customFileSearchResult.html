@@ -1,9 +1,12 @@
 <template>
     <template if:true={tableDisp}>
+        <lightning:tile >
+            <p class="slds-truncate" >結果 : {displayLeftCount} - {displayRightCount} / {dataSize}件</p>
+        </lightning:tile>
         <div>
             <lightning-datatable
                 key-field="id"
-                data={data}
+                data={displayResult}
                 show-row-number-column
                 hide-checkbox-column
                 columns={tableColumns}
@@ -13,6 +16,25 @@
                 onsort={handle_sort_data} 
                 sorted-direction={sorted_direction}>
             </lightning-datatable>
+        </div>
+        <div class="slds-col slds-size_1-of-20">
+            <lightning-button-icon 
+                title="Go To Previous Page Of This List"
+                icon-name="utility:left" 
+                size="medium" 
+                alternative-text="refresh this view"
+                onclick={pressLeft} 
+                disabled={leftDisabled}>
+            </lightning-button-icon>
+        
+            <lightning-button-Icon 
+                title="Go To Next Page Of This List"
+                icon-name="utility:right" 
+                size="medium"
+                alternative-text="refresh this view"
+                onclick={pressRight} 
+                disabled={rightDisabled}>
+            </lightning-button-Icon>
         </div>
     </template>
 </template>
