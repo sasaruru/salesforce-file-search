@@ -2,11 +2,13 @@ import { LightningElement, track, wire, api } from 'lwc';
 import searchRecords from '@salesforce/apex/CustomSearchController.searchRecords';
 import getObjSelectOptions from '@salesforce/apex/CustomSearchController.getObjSelectOptions';
 import { CurrentPageReference } from 'lightning/navigation';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent'
 import { fireEvent } from 'c/pubsub';
 
 export default class CustomFileSearchForm extends LightningElement {
     @api targetObjects;
-    
+    @api displayLimit;
+
     @wire(CurrentPageReference) pageRef;
     @track searchText;
     // 初期値は取引先
@@ -25,8 +27,18 @@ export default class CustomFileSearchForm extends LightningElement {
 
     handleSearch() {
         let pageRef = this.pageRef;
-        console.log(this.sortOptionValue);
-        searchRecords({searchText : this.searchText, targetObject: this.targetObject, sortValue: this.sortOptionValue})
+        // 2文字以上ないとエラー
+        if(this.searchText.length < 2){
+            const evt = new ShowToastEvent({
+                title: '検索エラー',
+                message: '2文字以上で検索してください',
+                variant: 'error',
+            });
+            this.dispatchEvent(evt);
+            return;
+        }
+
+        searchRecords({searchText : this.searchText, targetObject: this.targetObject, sortValue: this.sortOptionValue, limits: this.displayLimit})
             .then(result=>{
                 const params = {targetObject: this.targetObject, result: result};
                 fireEvent(pageRef, 'searchResult', params);

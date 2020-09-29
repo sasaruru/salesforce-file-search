@@ -8,6 +8,7 @@
     <targetConfigs>
         <targetConfig targets="lightning__AppPage">
             <property name="targetObjects" type="String" />
+            <property name="displayLimit" type="Integer" default="500" max="2000" required="true"/>
         </targetConfig>
     </targetConfigs>
 </LightningComponentBundle>

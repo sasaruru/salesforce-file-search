@@ -32,7 +32,7 @@ public class CustomSearchController {
     }
    
     @AuraEnabled
-    public static List<Result> searchRecords(String searchText, String targetObject, String sortValue) {
+    public static List<Result> searchRecords(String searchText, String targetObject, String sortValue, Integer limits) {
         List<Result> results = new List<Result>();
         Integer counter= 0;
         if(searchText.length() < 2){
@@ -41,7 +41,7 @@ public class CustomSearchController {
         // ------------------------------
         //  SQSLによるコンテンツID取得
         // ------------------------------
-        String query = 'find \'' + searchText + '\' in all fields returning ContentVersion(Id,Title,ContentDocumentId,FileExtension,SystemModstamp ORDER BY SystemModstamp ' + sortValue + ')';
+        String query = 'find \'' + createSeachText(searchText) + '\' in all fields returning ContentVersion(Id,Title,ContentDocumentId,FileExtension,SystemModstamp ORDER BY SystemModstamp ' + sortValue + ' LIMIT ' + limits.format() +')';
         System.Debug(query);
         List<List <sObject>> sobList =  search.query(query);
         // ドキュメントID取得
@@ -77,6 +77,13 @@ public class CustomSearchController {
             }
         }
         return results;
+    }
+    // 間にスペースあればANDでつなぐ
+    private static String createSeachText(String baseSearchText){
+        // 全角スペースを半角スペースへ変換し、Trim
+        baseSearchText = baseSearchText.replace('　',' ').trim();
+        // 半角スペースをAND変換
+        return baseSearchText.replace(' ',' AND ');
     }
 
     private static Result createResult(ContentVersion contentVersion,List<ContentDocumentLink> contentDocumentLinks,List<SObject> objLists){

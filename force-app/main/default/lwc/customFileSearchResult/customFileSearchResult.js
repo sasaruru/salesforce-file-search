@@ -136,11 +136,22 @@ export default class CustomFileSearchResult extends NavigationMixin(LightningEle
         });
     }
     handle_sort_data(event) {
-        this.sorted_by = event.detail.fieldName;
+        // リンク形式の2カラムはソートをIDでなく値で実施するため
+        // 当処理を実装
+        let sortField = event.detail.fieldName;
+        if(sortField === 'documentLink'){
+            this.sorted_by = 'documentTitle';
+        } else if(sortField === 'targetLink'){
+            this.sorted_by = 'targetName';
+        } else {
+            this.sorted_by = sortField;
+        }
         this.sorted_direction = event.detail.sortDirection;
-        this.sort_data(event.detail.fieldName, event.detail.sortDirection);
+        this.sort_data(this.sorted_by, event.detail.sortDirection);
+        this.sorted_by = sortField;
     }
     sort_data(fieldname, direction) {
+        console.log(fieldname);
         let sorting_data = JSON.parse(JSON.stringify(this.data));
         // ソートするカラムの値を参照
         let keyValue = (a) => {
@@ -153,6 +164,7 @@ export default class CustomFileSearchResult extends NavigationMixin(LightningEle
             return isReverse * ((x > y) - (y > x));
         });
         this.data = sorting_data;
+        this.displayResult = this.data.slice(this.left, this.right);
     }
 
     /**
