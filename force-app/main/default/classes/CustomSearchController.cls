@@ -1,13 +1,11 @@
 public class CustomSearchController {
 
-
     @AuraEnabled
     public static Map<ID, SObject> getObjectInfo(String targetObject ,String targetColumns, List<String> ids ){
         // クエリ生成
         String q = 'SELECT Id, Name,' + targetColumns + ' FROM ' + targetObject + ' WHERE Id in :ids';
         List<SObject> sList = Database.query(q);
         Map<Id, SObject> result = new Map<Id, SObject>(Database.query(q));
-        System.debug(result);
         return result;
     }
 
