@@ -10,9 +10,7 @@ var columns = [
     { label: 'Name', fieldName: 'targetLink', type: 'url', sortable: true, typeAttributes:{label: { fieldName:'targetName'},  target: '_blank'}},
     { label: 'ファイル名', fieldName: 'documentLink', type: 'url', sortable: true, typeAttributes:{label: { fieldName:'documentTitle'}}},
     { label: '拡張子', fieldName: 'documentExtension', type: 'text' },
-    { label: 'アップロード日', fieldName: 'lastUpdate', type: 'text'},
-    // ここから任意項目
-    
+    { label: 'アップロード日', fieldName: 'lastUpdate', type: 'text'},    
 ];
 
 export default class CustomFileSearchResult extends NavigationMixin(LightningElement) {
@@ -20,7 +18,7 @@ export default class CustomFileSearchResult extends NavigationMixin(LightningEle
     @api targetColumns;
     @api labels;
     @api displayRows;
-
+    // data
     @wire(CurrentPageReference) pageRef;
     @track data = [];
     @track displayResult;

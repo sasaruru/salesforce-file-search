@@ -16,6 +16,7 @@ public class CustomSearchControllerTest {
         System.assertEquals('Test Document', results[0].documentTitle);
         Test.stopTest();
     }
+
     // 1アカウント2ドキュメントがヒット
     @isTest static void testOneAccountTwoContent(){
         Test.startTest();
@@ -54,6 +55,7 @@ public class CustomSearchControllerTest {
         }
         Test.stopTest();
     }
+
     // 2アカウントがヒット
     @isTest static void testTwoAccountTwoContent(){
         Test.startTest();
@@ -85,6 +87,7 @@ public class CustomSearchControllerTest {
         System.assertEquals(0, results.size());
         Test.stopTest();
     }
+
     // 文字数が少ないことによる検索失敗
     @isTest static void testMinKeyword(){
         Test.startTest();
@@ -98,6 +101,7 @@ public class CustomSearchControllerTest {
         System.assertEquals(0, results.size());
         Test.stopTest();
     }
+
     // ファイルは検索されたが、親オブジェクトに関連づいていないので結果なし
     @isTest static void testNoParent(){
         Test.startTest();
@@ -118,6 +122,7 @@ public class CustomSearchControllerTest {
         System.assertEquals(0, results.size());
         Test.stopTest();
     }
+
     // ASCソート
     @isTest static void testSortASC(){
         Test.startTest();
@@ -137,6 +142,7 @@ public class CustomSearchControllerTest {
         System.assertEquals('Test Account', results[0].targetName);
         Test.stopTest();
     }
+
     // DESCソート
     @isTest static void testSortDESC(){
         Test.startTest();
@@ -156,7 +162,27 @@ public class CustomSearchControllerTest {
         System.assertEquals('Test Account', results[1].targetName);
         Test.stopTest();
     }
-    // TODO ascでもdescでもない場合
+
+    // ascでもdescでもない場合
+    // ASCソート
+    @isTest static void testSortOthers(){
+        Test.startTest();
+        wait(10);
+        // テストデータ（親オブジェクトとファイルのペア）作成
+        createTestData();
+
+        List<ContentVersion> contentVersionList = [SELECT Id, ContentDocumentId FROM ContentVersion WHERE Title = 'Test Document'];
+        Id [] fixedSearchResults= new Id[2];
+        for(Integer i=0 ; i < contentVersionList.size() ; i++){
+            fixedSearchResults[i] = contentVersionList[i].Id;
+        }
+        Test.setFixedSearchResults(fixedSearchResults);
+        // Test実施
+        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('Test','Account', 'test', 500);
+        System.assertEquals(2, results.size());
+        System.assertEquals('Test Account', results[0].targetName);
+        Test.stopTest();
+    }
 
     // limit
     @isTest static void testAccountLimit1(){
@@ -210,15 +236,19 @@ public class CustomSearchControllerTest {
     }
 
     // getObjSelectOptions 複数オブジェクト
+    // 標準オブジェクトのAPI名を変更している場合
     @isTest static void testObjectOptionsMulti(){
         Test.startTest();
         List<String> objList = new List<String>{'Account', 'Contact'};
         // テスト実施
         List<Map<String, String>> results = CustomSearchController.getObjSelectOptions(objList);
         System.assertEquals(2, results.size());
-        System.assertEquals('取引先', results[0].get('label'));
+
+        Map<String, sObjectType> sObjTypeMap = Schema.getGlobalDescribe();
+        // ラベル名取得し比較        
+        System.assertEquals(sObjTypeMap.get('Account').getDescribe().getLabel(), results[0].get('label'));
         System.assertEquals('Account', results[0].get('value'));
-        System.assertEquals('取引先責任者', results[1].get('label'));
+        System.assertEquals(sObjTypeMap.get('Contact').getDescribe().getLabel(), results[1].get('label'));
         System.assertEquals('Contact', results[1].get('value'));
         Test.stopTest();
     }
@@ -246,6 +276,7 @@ public class CustomSearchControllerTest {
         cdl.shareType = 'V';
         Insert cdl;
     }
+
     private static void createTestData(){
         //Create Document Parent Record
         Account acc = new Account(Name='Test Account2', Website='https://test2');
@@ -268,6 +299,7 @@ public class CustomSearchControllerTest {
         cdl.shareType = 'V';
         Insert cdl;
     }
+
     private static void wait(Integer millisec){
         Integer start = System.Now().millisecond();
         while(System.Now().millisecond()< start+millisec){ 
