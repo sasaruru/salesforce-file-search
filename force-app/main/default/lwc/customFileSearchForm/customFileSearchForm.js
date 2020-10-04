@@ -1,23 +1,47 @@
-import { LightningElement, track, wire } from 'lwc';
+import { LightningElement, track, wire, api } from 'lwc';
 import searchRecords from '@salesforce/apex/CustomSearchController.searchRecords';
+import getObjSelectOptions from '@salesforce/apex/CustomSearchController.getObjSelectOptions';
 import { CurrentPageReference } from 'lightning/navigation';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent'
 import { fireEvent } from 'c/pubsub';
 
 export default class CustomFileSearchForm extends LightningElement {
+    @api targetObjects;
+    @api displayLimit;
+
     @wire(CurrentPageReference) pageRef;
     @track searchText;
     // 初期値は取引先
-    @track targetObject = 'Account';
+    @track targetObject;
+    @track options;
+    @track sortOptions;
+    @track sortOptionValue = 'DESC';
 
+    connectedCallback(){
+        this.getOptions();
+        this.getSortOptions();
+    }
     handleSearchTextChange(event){
-        this.searchText = event.detail.value;
+        this.searchText = event.detail.value;       
     }
 
     handleSearch() {
         let pageRef = this.pageRef;
-        searchRecords({searchText : this.searchText, targetObject: this.targetObject})
+        // 2文字以上ないとエラー
+        if(this.searchText.length < 2){
+            const evt = new ShowToastEvent({
+                title: '検索エラー',
+                message: '2文字以上で検索してください',
+                variant: 'error',
+            });
+            this.dispatchEvent(evt);
+            return;
+        }
+
+        searchRecords({searchText : this.searchText, targetObject: this.targetObject, sortValue: this.sortOptionValue, limits: this.displayLimit})
             .then(result=>{
-                fireEvent(pageRef, 'searchResult', result);
+                const params = {targetObject: this.targetObject, result: result};
+                fireEvent(pageRef, 'searchResult', params);
                 this.error = undefined;
             })
             .catch(error =>{
@@ -28,14 +52,31 @@ export default class CustomFileSearchForm extends LightningElement {
     handleChangeSelect(event){
         this.targetObject = event.detail.value;
     }
+    handleChangeSort(event){
+        this.sortOptionValue = event.detail.value;
+    }
 
-    get options(){
-        // 対象オブジェクトを追加する場合はここに直接記載
-        // TODO soqlで対象オブジェクト取得
-        return [
-            {'label': '取引先', 'value': 'Account'},
-            {'label': 'リード', 'value': 'Lead'},
-            {'label': '取引先責任者', 'value': 'Contact'},
+    getOptions(){
+        // undifinedも含む
+        if(this.targetObjects == null){
+            return [];
+        }
+        const objList = this.targetObjects.split(',');
+        getObjSelectOptions({objs: objList})
+            .then(result=>{
+                console.log(result);
+                this.targetObject = result[0].value;
+                this.options = result;
+            })
+            .catch(error =>{
+                console.log(error);
+                this.error = error;
+            });
+    }
+    getSortOptions() {
+        this.sortOptions =  [
+            { label: '降順', value: 'DESC' },
+            { label: '昇順', value: 'ASC' },
         ];
     }
 }

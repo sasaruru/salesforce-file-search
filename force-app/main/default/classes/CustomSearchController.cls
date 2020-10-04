@@ -1,7 +1,55 @@
 public class CustomSearchController {
-   
+    /**
+     * @param targetObject 検索対象オブジェクト
+     * @param targetColumns 表示カラム
+     * @param ids 検索対象のレコードID
+     * @description レコードidから画面に表示する対象のオブジェクト情報を取得する.
+     * @return IDと表示情報のMAP
+     */
     @AuraEnabled
-    public static List<Result> searchRecords(String searchText, String targetObject) {
+    public static Map<ID, SObject> getObjectInfo(String targetObject ,String targetColumns, List<String> ids ){
+        // クエリ生成
+        String q = 'SELECT Id, Name,' + targetColumns + ' FROM ' + targetObject + ' WHERE Id in :ids';
+        List<SObject> sList = Database.query(q);
+        Map<Id, SObject> result = new Map<Id, SObject>(Database.query(q));
+        return result;
+    }
+
+    /**
+     * @param obj 取得オブジェクトAPI名
+     * @description オブジェクトのAPI名からラベル名を取得する.
+     * @return オブジェクトのAPI名とラベル名のMAPリスト(key:label,value value:ラベル、API名)
+     */
+    @AuraEnabled
+    public static List<Map<String, String>> getObjSelectOptions(List<String> objs){
+        // mapの中身は
+        // key : label, value
+        // value: オブジェクトのAPI, ラベル名
+        List<Map<String, String>> result = new List<Map<String, String>>();
+
+        for(String obj : objs){
+            Map<String, String> option = new Map<String, String>();
+            option.put('value', obj);
+
+            Map<String, sObjectType> sObjTypeMap = Schema.getGlobalDescribe();
+            sObjectType sObjType = sObjTypeMap.get(obj);
+            option.put('label', sObjType.getDescribe().getLabel());
+
+            result.add(option);
+        }
+        return result;
+    }
+
+    /**
+     * @param searchText SOSL検索キー
+     * @param targetObject 検索対象オブジェクト
+     * @param sortValue desc or asc (ソートは最終更新日)
+     * @param limits 検索上限 ※SOSLの取得上限は2000
+     * @description ファイルオブジェクトをSQSL検索し、対象オブジェクトと連結させて返却する.
+     * @return 検索結果
+     */
+    @AuraEnabled
+    public static List<Result> searchRecords(String searchText, String targetObject, String sortValue, Integer limits) {
         List<Result> results = new List<Result>();
         Integer counter= 0;
         if(searchText.length() < 2){
@@ -10,7 +58,7 @@ public class CustomSearchController {
         // ------------------------------
         //  SQSLによるコンテンツID取得
         // ------------------------------
-        String query = 'find \'' + searchText + '\' in all fields returning ContentVersion(Id,Title,ContentDocumentId,FileExtension,SystemModstamp)';
+        String query = 'find \'' + createSeachText(searchText) + '\' in all fields returning ContentVersion(Id,Title,ContentDocumentId,FileExtension,SystemModstamp ORDER BY SystemModstamp ' + createSortText(sortValue) + ' LIMIT ' + limits.format() +')';
         System.Debug(query);
         List<List <sObject>> sobList =  search.query(query);
         // ドキュメントID取得
@@ -48,6 +96,40 @@ public class CustomSearchController {
         return results;
     }
 
+    /**
+     * @param baseSearchText 検索文字列
+     * @description スペースをANDでつなぐ.
+     * @return SOSL検索文字列
+     */
+    private static String createSeachText(String baseSearchText){
+        // 全角スペースを半角スペースへ変換し、Trim
+        baseSearchText = baseSearchText.replace('　',' ').trim();
+        // 半角スペースをAND変換
+        return baseSearchText.replace(' ',' AND ');
+    }
+
+    /**
+     * @param baseSortText ソート文字列
+     * @description ソート文字列を作成ASCでもDESCでもない場合はASCを返す.
+     * @return SOSLソート文字列
+     */
+    private static String createSortText(String baseSortText){
+        if('ASC'.equals(baseSortText.toUpperCase())){
+            return baseSortText.toUpperCase();
+        }
+        if('DESC'.equals(baseSortText.toUpperCase())){
+            return baseSortText.toUpperCase();
+        }
+        return 'ASC';
+    }
+
+    /**
+     * @param contentVersion 
+     * @param contentDocumentLinks 検索文字列
+     * @param objLists
+     * @description 画面表示用の結果オブジェクトを作成する.
+     * @return Resultオブジェクト
+     */
     private static Result createResult(ContentVersion contentVersion,List<ContentDocumentLink> contentDocumentLinks,List<SObject> objLists){
         String targetRecordId = '';
         String documentId = contentVersion.ContentDocumentId;
@@ -58,7 +140,6 @@ public class CustomSearchController {
                 targetRecordId = contentDocumentLink.LinkedEntityId;
                 for (SObject obj :objLists){
                     if(targetRecordId.equals((string)obj.get('Id'))){
-                        System.debug('create result');
                         return new Result(obj, contentVersion);
                     }
                 }               
