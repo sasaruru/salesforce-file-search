@@ -12,22 +12,34 @@
                 <div class="slds-col slds-size_1-of-4">
                     <lightning-combobox variant="label-hidden" name="progress" value={targetObject} placeholder="Select Progress" options={options} onchange={handleChangeSelect}></lightning-combobox>
                 </div>
-                <div class="slds-col slds-size_2-of-4">
+                <div class="slds-col slds-size_3-of-4">
                     <lightning-input label="Text" name="accountName" placeholder="オブジェクトを検索" variant="label-hidden" onchange={handleSearchTextChange} value={searchText}></lightning-input>                  
                 </div>
-                <div class="slds-col slds-size_1-of-4">
-                    <lightning-button variant="search" label="検索" title="検索" onclick={handleSearch} class="slds-m-left_x-small"></lightning-button>
-                </div>
             </div>
-            <div class="sld-grid">
-                <div class="slds-col slds-size_4-of-4">
-                    <lightning-radio-group name="radioGroup"
-                          label="アップロード日の並び順"
-                          options={sortOptions}
-                          value={sortOptionValue}
-                          type="radio"
-                          onchange={handleChangeSort}></lightning-radio-group>
+            <div class="slds-grid">
+                <div class="slds-col slds-size_1-of-4">
+                    <lightning-radio-group 
+                        name="sortRadioGroup"
+                        label="アップロード日の並び順"
+                        options={sortOptions}
+                        value={sortOptionValue}
+                        type="button"
+                        onchange={handleChangeSort}></lightning-radio-group>                    
                 </div>
+                <template if:true={recordTypes}>
+                    <div class="slds-col slds-size_3-of-4">
+                        <lightning-radio-group 
+                            name="recordTypeRadioGroup"
+                            label="タイプ"
+                            options={recordTypes}
+                            value={recordTypeValue}
+                            type="button"
+                            onchange={handleChangeRecordType}></lightning-radio-group>
+                    </div>
+                </template>
+            </div>
+            <div class="slds-col slds-size_4-of-4 slds-align_absolute-center slds-p-top_medium">
+                <lightning-button variant="brand" label="検索" title="検索" onclick={handleSearch} class="slds-m-left_x-small"></lightning-button>
             </div>
         </div>
     </lightning-card>

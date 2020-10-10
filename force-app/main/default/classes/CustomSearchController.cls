@@ -39,7 +39,24 @@ public class CustomSearchController {
         }
         return result;
     }
+    /**
+     * @param String Sobject名
+     * @description オブジェクトのAPI名からレコードタイプ情報を取得ｓｙｒｙ
+     * @return レコードタイプのAPI名とラベル名のMAPリスト(key:label,value value:ラベル、API名)
+     */
+    @AuraEnabled
+    public static List<Map<String, String>> getObjRecordTypes(String sObjectName){
+        List<Map<String, String>> result = new List<Map<String, String>>();
 
+        List<RecordType> rtList = [SELECT Id,Name,DeveloperName FROM RecordType WHERE SobjectType= :sObjectName];
+        for (RecordType rt : rtList){
+            Map<String, String> resultMap = new Map<String, String>();
+            resultMap.put('label',rt.Name);
+            resultMap.put('value',rt.Id);
+            result.add(resultMap);
+        }
+        return result;
+    }
     /**
      * @param searchText SOSL検索キー
      * @param targetObject 検索対象オブジェクト
@@ -49,7 +66,7 @@ public class CustomSearchController {
      * @return 検索結果
      */
     @AuraEnabled
-    public static List<Result> searchRecords(String searchText, String targetObject, String sortValue, Integer limits) {
+    public static List<Result> searchRecords(String searchText, String targetObject, String sortValue, String recordTypeId, Integer limits) {
         List<Result> results = new List<Result>();
         Integer counter= 0;
         if(searchText.length() < 2){
@@ -58,7 +75,9 @@ public class CustomSearchController {
         // ------------------------------
         //  SQSLによるコンテンツID取得
         // ------------------------------
-        String query = 'find \'' + createSeachText(searchText) + '\' in all fields returning ContentVersion(Id,Title,ContentDocumentId,FileExtension,SystemModstamp ORDER BY SystemModstamp ' + createSortText(sortValue) + ' LIMIT ' + limits.format() +')';
+        String query = 'find \'' + createSeachText(searchText) + '\' in all fields returning ContentVersion(Id,Title,ContentDocumentId,FileExtension,SystemModstamp' 
+            + ' ORDER BY SystemModstamp ' + createSortText(sortValue) 
+            + ' LIMIT ' + limits.format() +')';
         System.Debug(query);
         List<List <sObject>> sobList =  search.query(query);
         // ドキュメントID取得
@@ -85,6 +104,10 @@ public class CustomSearchController {
         //  LinkedEntityIdから対象オブジェクトレコード取得
         // ----------------------------------------------------------    
         String q = 'SELECT Id, Name FROM ' + targetObject + ' WHERE Id in :linkedEntityIds';
+        // レコードタイプ指定がある場合にWHERE句指定
+        if(!'ALL'.equals(recordTypeId.toUpperCase())){
+            q = q + ' AND RecordTypeId = ' + '\'' + recordTypeId + '\'';
+        }
         List<SObject> objList = Database.query(q);
         // 画面表示は検索されたファイル分のため取得したContentVersion事にオブジェクト作成
         for (ContentVersion contentVersion : cList){
