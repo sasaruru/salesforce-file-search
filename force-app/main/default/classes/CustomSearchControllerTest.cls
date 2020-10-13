@@ -10,7 +10,7 @@ public class CustomSearchControllerTest {
         fixedSearchResults[0] = docId;
         Test.setFixedSearchResults(fixedSearchResults);
         // Test実施
-        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('Test','Account','desc', 10);
+        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('Test','Account','desc','ALL', 10);
         System.assertEquals(1, results.size());
         System.assertEquals('Test Account', results[0].targetName);
         System.assertEquals('Test Document', results[0].documentTitle);
@@ -47,7 +47,7 @@ public class CustomSearchControllerTest {
         fixedSearchResults[1] = docId2;
         Test.setFixedSearchResults(fixedSearchResults);
         // Test実施
-        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('Document','Account', 'asc', 2);
+        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('Document','Account', 'asc','ALL', 2);
         System.assertEquals(2, results.size());
         for (CustomSearchController.Result result : results){
             System.assert('Test Document'.equals(result.documentTitle) || 'Sample Document'.equals(result.documentTitle));
@@ -69,7 +69,7 @@ public class CustomSearchControllerTest {
         }
         Test.setFixedSearchResults(fixedSearchResults);
         // Test実施
-        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('Test','Account', 'desc', 500);
+        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('Test','Account', 'desc','ALL', 500);
         System.assertEquals(2, results.size());
         for (CustomSearchController.Result result : results){
             System.assert('Test Account'.equals(result.targetName) || 'Test Account2'.equals(result.targetName));
@@ -83,7 +83,7 @@ public class CustomSearchControllerTest {
         Test.startTest();
         // SQSL結果を設定
         // Test実施
-        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('Test','Account', 'asc', 100);
+        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('Test','Account', 'asc','ALL', 100);
         System.assertEquals(0, results.size());
         Test.stopTest();
     }
@@ -97,7 +97,7 @@ public class CustomSearchControllerTest {
         fixedSearchResults[0] = docId;
         Test.setFixedSearchResults(fixedSearchResults);
         // Test実施
-        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('T','Account','asc',100);
+        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('T','Account','asc','ALL',100);
         System.assertEquals(0, results.size());
         Test.stopTest();
     }
@@ -118,7 +118,7 @@ public class CustomSearchControllerTest {
         fixedSearchResults[0] = con.Id;
         Test.setFixedSearchResults(fixedSearchResults);
         // Test実施
-        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('Sample','Account', 'asc', 100);
+        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('Sample','Account', 'asc','ALL', 100);
         System.assertEquals(0, results.size());
         Test.stopTest();
     }
@@ -137,7 +137,7 @@ public class CustomSearchControllerTest {
         }
         Test.setFixedSearchResults(fixedSearchResults);
         // Test実施
-        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('Test','Account', 'asc', 500);
+        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('Test','Account', 'asc','ALL', 500);
         System.assertEquals(2, results.size());
         System.assertEquals('Test Account', results[0].targetName);
         Test.stopTest();
@@ -157,7 +157,7 @@ public class CustomSearchControllerTest {
         }
         Test.setFixedSearchResults(fixedSearchResults);
         // Test実施
-        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('Test','Account', 'desc', 500);
+        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('Test','Account', 'desc','ALL', 500);
         System.assertEquals(2, results.size());
         System.assertEquals('Test Account', results[1].targetName);
         Test.stopTest();
@@ -178,7 +178,7 @@ public class CustomSearchControllerTest {
         }
         Test.setFixedSearchResults(fixedSearchResults);
         // Test実施
-        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('Test','Account', 'test', 500);
+        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('Test','Account', 'test','ALL', 500);
         System.assertEquals(2, results.size());
         System.assertEquals('Test Account', results[0].targetName);
         Test.stopTest();
@@ -197,7 +197,7 @@ public class CustomSearchControllerTest {
         }
         Test.setFixedSearchResults(fixedSearchResults);
         // Test実施 limit1
-        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('Test','Account', 'desc', 1);
+        List<CustomSearchController.Result> results = CustomSearchController.searchRecords('Test','Account', 'desc','ALL', 1);
         System.assertEquals(1, results.size());
         Test.stopTest();
     }
@@ -253,6 +253,17 @@ public class CustomSearchControllerTest {
         Test.stopTest();
     }
 
+    // RecordType取得.
+    // 現時点で組織内にレコードタイプを設定していない場合、カバレッジが100にならないことに注意
+    @isTest static void testGetRecordType (){
+        Test.startTest();
+        List<Map<String, String>> result = CustomSearchController.getObjRecordTypes('Account');
+        // assert実行しない
+        // System.assertEquals(2, results.size();
+        Test.stopTest();        
+    }    
+
+
     // テストデータ生成
     @testSetup static void testSetup(){
         //Create Document Parent Record
@@ -276,7 +287,7 @@ public class CustomSearchControllerTest {
         cdl.shareType = 'V';
         Insert cdl;
     }
-
+    
     private static void createTestData(){
         //Create Document Parent Record
         Account acc = new Account(Name='Test Account2', Website='https://test2');

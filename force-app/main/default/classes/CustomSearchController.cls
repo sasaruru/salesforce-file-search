@@ -61,6 +61,7 @@ public class CustomSearchController {
      * @param searchText SOSL検索キー
      * @param targetObject 検索対象オブジェクト
      * @param sortValue desc or asc (ソートは最終更新日)
+     * @param recordTypeId レコードタイプID
      * @param limits 検索上限 ※SOSLの取得上限は2000
      * @description ファイルオブジェクトをSQSL検索し、対象オブジェクトと連結させて返却する.
      * @return 検索結果
