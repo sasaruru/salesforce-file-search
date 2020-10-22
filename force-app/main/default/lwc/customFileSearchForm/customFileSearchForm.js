@@ -12,7 +12,7 @@ export default class CustomFileSearchForm extends LightningElement {
 
     @wire(CurrentPageReference) pageRef;
     @track searchText;
-    // 初期値は取引先
+    // 初期値は取引先z
     @track targetObject;
     @track options;
     @track sortOptions;
@@ -67,7 +67,6 @@ export default class CustomFileSearchForm extends LightningElement {
             if(result == null || result.length === 0){             
                 return;
             }
-            console.log(result);
             this.recordTypes = result;
             this.recordTypes.push({label:'全て', value:'ALL'});
             this.recordTypeValue = result[0].value;
@@ -91,7 +90,6 @@ export default class CustomFileSearchForm extends LightningElement {
         const objList = this.targetObjects.split(',');
         getObjSelectOptions({objs: objList})
             .then(result=>{
-                console.log(result);
                 this.targetObject = result[0].value;
                 this.options = result;
                 // レコードタイプ表示設定
