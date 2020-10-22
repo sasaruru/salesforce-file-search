@@ -64,6 +64,19 @@ export default class CustomFileSearchResult extends NavigationMixin(LightningEle
             this.tableLoadingState = false;
             this.tableDisp = true;
             this.data = params.result;
+            // ページング設定
+            this.displayResult = params.result.slice(0,this.displayRows);
+            // データサイズ設定
+            this.left = 0;
+            this.right = this.displayRows;
+            this.dataSize = params.result.length
+            this.displayLeftCount = 1;
+            // 取得件数がdisplayRows件以下だった場合のページング設定
+            if(this.right > this.dataSize){
+                this.displayRightCount = this.dataSize;
+            }else{
+                this.displayRightCount = this.right;
+            }
             return;
         }
         
@@ -149,7 +162,6 @@ export default class CustomFileSearchResult extends NavigationMixin(LightningEle
         this.sorted_by = sortField;
     }
     sort_data(fieldname, direction) {
-        console.log(fieldname);
         let sorting_data = JSON.parse(JSON.stringify(this.data));
         // ソートするカラムの値を参照
         let keyValue = (a) => {
