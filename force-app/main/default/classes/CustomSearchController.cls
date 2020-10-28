@@ -98,9 +98,19 @@ public class CustomSearchController {
         // ドキュメントリンク取得
         List<ContentDocumentLink> contentDocumentLinks = [SELECT Id, ContentDocumentId, LinkedEntityId FROM ContentDocumentLink WHERE ContentDocumentId in :contentVersionIds];
         Set<String> linkedEntityIds = new Set<String>();
+        Map<String, String> documentEntityMap = new Map<String, String>();
         for (ContentDocumentLink cdLink : contentDocumentLinks){
             linkedEntityIds.add(cdLink.LinkedEntityId);
+            //  LinkedEntityIdがtargetObjectのレコードIDならMapに追加する.
+            ID objRecId = Id.valueOf(cdLink.LinkedEntityId);
+            Schema.SObjectType sObjType = objRecId.getSObjectType();
+            Schema.DescribeSObjectResult sObjResult = sObjType.getDescribe();
+            String objName = sObjResult.getName();
+            if(targetObject.equals(objName)){
+                documentEntityMap.put(cdLink.ContentDocumentId, cdLink.LinkedEntityId);
+            }            
         }
+        System.debug('linkedEntityIds size : '+  linkedEntityIds.size());
         // ----------------------------------------------------------
         //  LinkedEntityIdから対象オブジェクトレコード取得
         // ----------------------------------------------------------    
@@ -109,10 +119,10 @@ public class CustomSearchController {
         if(!'ALL'.equals(recordTypeId.toUpperCase())){
             q = q + ' AND RecordTypeId = ' + '\'' + recordTypeId + '\'';
         }
-        List<SObject> objList = Database.query(q);
+        Map<Id, SObject> objMap = new Map<ID, SObject>(Database.query(q));
         // 画面表示は検索されたファイル分のため取得したContentVersion事にオブジェクト作成
         for (ContentVersion contentVersion : cList){
-            Result result = createResult(contentVersion, contentDocumentLinks, objList);
+            Result result = createResult(contentVersion, documentEntityMap, objMap);
             if(result != null){
                 results.add(result);
             }
@@ -149,27 +159,26 @@ public class CustomSearchController {
 
     /**
      * @param contentVersion 
-     * @param contentDocumentLinks 検索文字列
-     * @param objLists
+     * @param documentEntityMap key:ContentDocumentId value:LinkedEntityId
+     * @param objMap オブジェクトMAP
      * @description 画面表示用の結果オブジェクトを作成する.
      * @return Resultオブジェクト
      */
-    private static Result createResult(ContentVersion contentVersion,List<ContentDocumentLink> contentDocumentLinks,List<SObject> objLists){
-        String targetRecordId = '';
+    private static Result createResult(ContentVersion contentVersion ,Map<String, String> documentEntityMap,Map<Id, SObject> objMap){
         String documentId = contentVersion.ContentDocumentId;
         // breakするとloop全体が止まってしまう仕様らしく、
         // 仕方がないがネスト対応
-        for (ContentDocumentLink contentDocumentLink : contentDocumentLinks){
-            if(documentId.equals(contentDocumentLink.ContentDocumentId)){
-                targetRecordId = contentDocumentLink.LinkedEntityId;
-                for (SObject obj :objLists){
-                    if(targetRecordId.equals((string)obj.get('Id'))){
-                        return new Result(obj, contentVersion);
-                    }
-                }               
-            }
-        }        
-        return null;
+        // contentVersionのDocumentIDからdocumentEntityMapを検索し、存在しないIDの場合はreturn
+        String targetEntityId = documentEntityMap.get(documentId);
+        if(targetEntityId == null || ''.equals(targetEntityId)){
+            return null;
+        }
+        // 取得したentityIdから取得したobject情報を取得する
+        SObject targetObject = objMap.get(targetEntityId);
+        if(targetObject == null){
+            return null;
+        }
+        return new Result(targetObject, contentVersion);
     }
     @TestVisible public class Result {
         @AuraEnabled
